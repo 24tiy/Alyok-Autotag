@@ -21,7 +21,7 @@ const DEFAULT_SETTINGS: AlyokAutotagSettings = {
 
 const AUTOTAG_MARKER = "<!-- Alyok Autotag -->";
 
-class AlyokAutotagPlugin extends Plugin {
+export default class AlyokAutotagPlugin extends Plugin {
   settings: AlyokAutotagSettings;
 
   async onload() {
@@ -117,5 +117,3 @@ class AlyokAutotagSettingTab extends PluginSettingTab {
       });
   }
 }
-
-module.exports = (plugin: any) => new AlyokAutotagPlugin(plugin.app, plugin.manifest);
