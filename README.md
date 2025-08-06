@@ -1,46 +1,48 @@
 # Alyok Autotag
 
-Automatically adds tags to notes in Obsidian based on the folder they're in.
+Automatically adds or updates tags in a note depending on the folder it’s in.
 
-## 🔧 How it works
+## 🔍 What It Does
 
-Alyok Autotag watches for:
+When you move a note into a folder, this plugin automatically adds tags to the note based on that folder.
 
-- 🆕 New notes
-- 🚚 Notes moved between folders
+The tags are placed at the bottom of the note after a marker like this:
 
-And then:
+```md
+<!-- Alyok Autotag -->
+#your-tag
+If such a block already exists, it will be replaced. Manually added tags elsewhere in the note remain untouched.
 
-- If a note is **created in a folder with a rule** → adds the tags defined in the rule
-- If a note is **created outside all configured folders** → adds the tag `#new`
-- If a note is **moved into a folder with a rule** → updates the tags accordingly
-- If a note is **moved out of a rule-defined folder** → replaces tags with `#new`
+If a note is created outside of the tracked folders, a default tag (e.g. #new) is added.
 
-Tags are added to the **bottom of the note**, under this marker:
-## ⚙️ Settings
+⚙️ Features
+Folder-to-tag mappings (you choose which folders trigger which tags)
 
-- You can define rules in the plugin settings:
-  - **Choose folders** from your vault using a dropdown list
-  - Assign one or more tags to each folder
+Optional tag colors (just for display in the plugin settings)
 
-## 🧩 Example
+Automatic replacement of plugin-added tags on note move
 
-| Folder          | Tags added       |
-|-----------------|------------------|
-| `TODO/`         | `#todo`          |
-| `Projects/Work` | `#work #project` |
-| *(any other)*   | `#new`           |
+Preserves any manual tags in the rest of the note
 
-## 📦 Installation (manual)
+🧪 Compatibility
+Tested on macOS with Obsidian v1.5.8
 
-1. Go to `.obsidian/plugins/`
-2. Create a folder `alyok-autotag`
-3. Place these files inside:
-   - `main.js`
-   - `manifest.json`
-4. Restart Obsidian
-5. Enable the plugin in **Settings → Community Plugins**
+Likely works on Windows and Linux (community testing welcome)
 
-## 👤 Author
+🛠 Installation
+Option 1: Community Plugins (when approved)
+Open Settings → Community Plugins
 
-Made with ♥ by [24tiy](https://github.com/24tiy)
+Click Browse and search for Alyok Autotag
+
+Click Install, then Enable
+
+Option 2: Manual Installation
+Download the latest release from the Releases page
+
+Extract the files main.js, manifest.json, and README.md
+
+Place them in .obsidian/plugins/alyok-autotag inside your vault
+
+📄 License
+MIT License — see LICENSE
