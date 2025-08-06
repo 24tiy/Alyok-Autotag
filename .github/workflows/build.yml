@@ -2,20 +2,17 @@ name: Build and Release
 
 on:
   push:
-    branches:
-      - main
     tags:
       - 'v*'
 
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3 
+        uses: actions/checkout@v3
 
-      - name: Setup Node.js
+      - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
           node-version: 18
@@ -26,13 +23,14 @@ jobs:
       - name: Build plugin
         run: npm run build
 
-      - name: Upload artifact to GitHub Release
-        if: startsWith(github.ref, 'refs/tags/')
+      - name: Create release folder
+        run: |
+          mkdir release
+          cp main.js manifest.json README.md release/
+
+      - name: Upload Release Assets
         uses: softprops/action-gh-release@v1
         with:
-          files: |
-            main.js
-            manifest.json
-            README.md
+          files: release/*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
