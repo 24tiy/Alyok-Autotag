@@ -1,9 +1,7 @@
-name: Build and Release
+name: Build and Upload Artifact
 
 on:
-  push:
-    tags:
-      - 'v*'
+  workflow_dispatch:
 
 jobs:
   build:
@@ -22,12 +20,11 @@ jobs:
       - name: Build plugin
         run: npm run build
 
-      - name: Upload to release
-        uses: softprops/action-gh-release@v1
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
         with:
-          files: |
+          name: alyok-autotag
+          path: |
             main.js
             manifest.json
             styles.css
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
