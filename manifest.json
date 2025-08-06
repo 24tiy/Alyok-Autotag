@@ -3,7 +3,7 @@
   "name": "Alyok Autotag",
   "version": "0.0.1",
   "minAppVersion": "0.12.0",
-  "description": "Automatically adds tags to notes when moved into specific folders.",
+  "description": "Automatically adds tags to notes when created or moved into specific folders.",
   "author": "24tiy",
   "authorUrl": "https://github.com/24tiy",
   "main": "main.js"
