@@ -6,6 +6,5 @@
   "description": "Automatically adds tags to notes when created or moved into specific folders.",
   "author": "24tiy",
   "authorUrl": "https://github.com/24tiy",
-  "main": "main.js",
   "isDesktopOnly": true
 }
