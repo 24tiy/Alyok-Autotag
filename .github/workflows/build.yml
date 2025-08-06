@@ -21,7 +21,7 @@ jobs:
         run: npm run build
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@4
         with:
           name: alyok-autotag
           path: |
