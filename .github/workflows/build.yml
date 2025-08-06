@@ -1,36 +1,35 @@
-name: Build and Release
+name: Build and release plugin
 
 on:
   push:
     tags:
-      - 'v*'
+      - 'v*.*.*'
 
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: 18
-
-      - name: Install dependencies
-        run: npm install
-
-      - name: Build plugin
-        run: npm run build
-
-      - name: Create release folder
+      - name: Read manifest version
+        id: manifest
         run: |
-          mkdir release
-          cp main.js manifest.json README.md release/
+          VERSION=$(jq -r .version manifest.json)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
 
-      - name: Upload Release Assets
-        uses: softprops/action-gh-release@v1
+      - name: Create release zip
+        run: |
+          mkdir build
+          cp main.js manifest.json README.md build/
+          cd build
+          zip -r ../alyok-autotag.zip .
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
         with:
-          files: release/*
+          tag_name: v${{ steps.manifest.outputs.version }}
+          name: v${{ steps.manifest.outputs.version }}
+          files: alyok-autotag.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
