@@ -1,7 +1,7 @@
 import {
   Plugin,
   TFile,
-  App,
+  TFolder,
   PluginSettingTab,
   Setting
 } from "obsidian";
@@ -26,34 +26,47 @@ export default class AlyokAutotagPlugin extends Plugin {
 
   async onload() {
     await this.loadSettings();
+    this.addSettingTab(new AlyokAutotagSettingTab(this.app, this));
 
     this.registerEvent(
-      this.app.vault.on("rename", async (file) => {
+      this.app.vault.on("create", async (file) => {
         if (file instanceof TFile && file.extension === "md") {
-          await this.processFile(file);
+          await this.applyTags(file);
         }
       })
     );
 
-    this.addSettingTab(new AlyokAutotagSettingTab(this.app, this));
+    this.registerEvent(
+      this.app.vault.on("rename", async (file, oldPath) => {
+        if (file instanceof TFile && file.extension === "md") {
+          await this.applyTags(file);
+        }
+      })
+    );
   }
 
-  async processFile(file: TFile) {
-    const folder = file.path.split("/").slice(0, -1).join("/");
-    const rule = this.settings.rules.find(r => r.folder === folder);
-    if (!rule) return;
+  getRuleForPath(path: string): FolderTagRule | null {
+    const folder = path.split("/").slice(0, -1).join("/");
+    return this.settings.rules.find((r) => folder === r.folder) || null;
+  }
 
-    let content = await this.app.vault.read(file);
-    const newTags = rule.tags.map(t => `#${t}`).join(" ");
-    const tagBlock = `${AUTOTAG_MARKER}\n${newTags}`;
+  async applyTags(file: TFile) {
+    const rule = this.getRuleForPath(file.path);
+    const content = await this.app.vault.read(file);
+
+    const tagBlock = rule
+      ? `${AUTOTAG_MARKER}\n${rule.tags.map((t) => `#${t}`).join(" ")}`
+      : `${AUTOTAG_MARKER}\n#new`;
+
+    let updated = content;
 
     if (content.includes(AUTOTAG_MARKER)) {
-      content = content.replace(new RegExp(`${AUTOTAG_MARKER}[\\s\\S]*`, "g"), tagBlock);
+      updated = content.replace(new RegExp(`${AUTOTAG_MARKER}[\\s\\S]*`, "g"), tagBlock);
     } else {
-      content += `\n\n${tagBlock}`;
+      updated += `\n\n${tagBlock}`;
     }
 
-    await this.app.vault.modify(file, content);
+    await this.app.vault.modify(file, updated);
   }
 
   async loadSettings() {
@@ -68,7 +81,7 @@ export default class AlyokAutotagPlugin extends Plugin {
 class AlyokAutotagSettingTab extends PluginSettingTab {
   plugin: AlyokAutotagPlugin;
 
-  constructor(app: App, plugin: AlyokAutotagPlugin) {
+  constructor(app, plugin) {
     super(app, plugin);
     this.plugin = plugin;
   }
@@ -78,21 +91,26 @@ class AlyokAutotagSettingTab extends PluginSettingTab {
     containerEl.empty();
     containerEl.createEl("h2", { text: "Alyok Autotag Settings" });
 
+    const folders = this.app.vault.getAllLoadedFiles()
+      .filter((f) => f instanceof TFolder)
+      .map((f) => f.path);
+
     this.plugin.settings.rules.forEach((rule, index) => {
       new Setting(containerEl)
         .setName(`Rule ${index + 1}`)
-        .addText(text => text
-          .setPlaceholder("folder path")
-          .setValue(rule.folder)
-          .onChange(async (value) => {
+        .addDropdown(drop => {
+          folders.forEach(path => drop.addOption(path, path));
+          drop.setValue(rule.folder);
+          drop.onChange(async (value) => {
             this.plugin.settings.rules[index].folder = value;
             await this.plugin.saveSettings();
-          }))
+          });
+        })
         .addText(text => text
           .setPlaceholder("tag1, tag2")
           .setValue(rule.tags.join(", "))
           .onChange(async (value) => {
-            this.plugin.settings.rules[index].tags = value.split(",").map(t => t.trim());
+            this.plugin.settings.rules[index].tags = value.split(",").map((t) => t.trim());
             await this.plugin.saveSettings();
           }))
         .addExtraButton(button => {
