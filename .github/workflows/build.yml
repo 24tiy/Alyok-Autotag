@@ -1,9 +1,9 @@
-name: Build and Release Obsidian Plugin
+name: Obsidian Plugin Release
 
 on:
   push:
     tags:
-      - 'v*.*.*'
+      - '1.*.*'  # ловим теги вида 1.0.0
 
 jobs:
   build:
@@ -21,22 +21,22 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Compile TypeScript
+      - name: Compile plugin
         run: npm run build
 
-      - name: Prepare release folder
+      - name: Create release folder
         run: |
-          mkdir dist
-          cp main.js dist/
-          cp manifest.json dist/
-          cp README.md dist/
+          mkdir release
+          cp main.js release/
+          cp manifest.json release/
+          cp README.md release/
 
-      - name: Create GitHub Release
+      - name: Upload compiled files to release
         uses: softprops/action-gh-release@v1
         with:
           files: |
-            dist/main.js
-            dist/manifest.json
-            dist/README.md
+            release/main.js
+            release/manifest.json
+            release/README.md
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
