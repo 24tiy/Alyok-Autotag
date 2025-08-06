@@ -1,6 +1,7 @@
 # Alyok Autotag
 
 Automatically adds or updates tags in a note depending on the folder it’s in.
+![Demo](alyok-autotag-demo.gif)
 
 ## 🔍 What It Does
 
