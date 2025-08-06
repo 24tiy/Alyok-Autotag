@@ -1,15 +1,19 @@
-name: Build and Upload Artifact
+name: Build and Release
 
 on:
   push:
     branches:
       - main
+    tags:
+      - 'v*'
 
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
       - name: Setup Node.js
         uses: actions/setup-node@v3
@@ -22,10 +26,13 @@ jobs:
       - name: Build plugin
         run: npm run build
 
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4.3.1
+      - name: Upload artifact to GitHub Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v1
         with:
-          name: alyok-autotag
-          path: |
+          files: |
             main.js
             manifest.json
+            README.md
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
