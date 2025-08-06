@@ -1,4 +1,22 @@
+# Alyok Autotag
 
+Automatically adds tags to notes in Obsidian based on the folder they're in.
+
+## 🔧 How it works
+
+Alyok Autotag watches for:
+
+- 🆕 New notes
+- 🚚 Notes moved between folders
+
+And then:
+
+- If a note is **created in a folder with a rule** → adds the tags defined in the rule
+- If a note is **created outside all configured folders** → adds the tag `#new`
+- If a note is **moved into a folder with a rule** → updates the tags accordingly
+- If a note is **moved out of a rule-defined folder** → replaces tags with `#new`
+
+Tags are added to the **bottom of the note**, under this marker:
 ## ⚙️ Settings
 
 - You can define rules in the plugin settings:
