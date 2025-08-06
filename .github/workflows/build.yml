@@ -1,4 +1,4 @@
-name: Build and release plugin
+name: Build and Release Alyok Autotag
 
 on:
   push:
@@ -10,26 +10,28 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-      - name: Read manifest version
-        id: manifest
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build plugin
+        run: npm run build
+
+      - name: Prepare release files
         run: |
-          VERSION=$(jq -r .version manifest.json)
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          mkdir release
+          cp main.js manifest.json README.md release/
 
-      - name: Create release zip
-        run: |
-          mkdir build
-          cp main.js manifest.json README.md build/
-          cd build
-          zip -r ../alyok-autotag.zip .
-
-      - name: Create GitHub Release
+      - name: Create GitHub release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v${{ steps.manifest.outputs.version }}
-          name: v${{ steps.manifest.outputs.version }}
-          files: alyok-autotag.zip
+          files: release/*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
