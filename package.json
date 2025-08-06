@@ -1,6 +1,6 @@
 {
   "name": "alyok-autotag",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "main": "main.js",
   "scripts": {
     "build": "esbuild main.ts --bundle --outfile=main.js --target=es2020 --external:obsidian --format=cjs"
