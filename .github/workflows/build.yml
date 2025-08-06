@@ -21,10 +21,9 @@ jobs:
         run: npm run build
 
       - name: Upload artifact
-        uses: actions/upload-artifact@4
+        uses: actions/upload-artifact@v4.3.1
         with:
           name: alyok-autotag
           path: |
             main.js
             manifest.json
-            styles.css
