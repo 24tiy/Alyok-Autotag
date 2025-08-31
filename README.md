@@ -1,49 +1,157 @@
 # Alyok Autotag
 
-Automatically adds or updates tags in a note depending on the folder it’s in.
-![Demo](alyok-autotag-demo.gif)
+Obsidian community plugin for **automatic tagging of notes** based on their folders, creation date, and user rules.  
+Helps keep your vault tidy without manually managing tags.
 
-## 🔍 What It Does
+---
 
-When you move a note into a folder, this plugin automatically adds tags to the note based on that folder.
+## ✨ Features
 
-The tags are placed at the bottom of the note after a marker like this:
+- **Folder → Tags rules**  
+  Define rules in settings: notes inside a specific folder automatically get the corresponding tags.
 
-```md
+- **`#new` tag for fresh notes**  
+  New notes created outside of any rule folder can automatically receive a `#new` tag.
+
+- **Automatic retag on move/rename**  
+  If a note is moved to another folder, its tags are updated according to the rules.  
+  Optionally, the `#new` tag is removed after the first move.
+
+- **Creation timestamp tag**  
+  Each note can automatically receive a tag with its creation date/time, e.g.:  
+```
+
+\#2025-08-31-14-35
+
+````
+
+- **Optional title stamping**  
+If enabled in settings, new notes are named by default with their creation timestamp (e.g. `2025-08-31-14-35.md`).  
+You can still append extra text manually.
+
+- **Safe tag block**  
+Tags are written into the note as a block at the bottom:  
+```markdown
 <!-- Alyok Autotag -->
-#your-tag
-If such a block already exists, it will be replaced. Manually added tags elsewhere in the note remain untouched.
+#tag1
+#tag2
+````
 
-If a note is created outside of the tracked folders, a default tag (e.g. #new) is added.
+The plugin ensures the block is never inserted inside code blocks (e.g. DataviewJS).
 
-⚙️ Features
-Folder-to-tag mappings (you choose which folders trigger which tags)
+* **Configurable block marker**
+  Default is `<!-- Alyok Autotag -->`, but you can customize it.
 
-Optional tag colors (just for display in the plugin settings)
+---
 
-Automatic replacement of plugin-added tags on note move
+## ⚙️ Settings
 
-Preserves any manual tags in the rest of the note
+* **Mode**
+  Currently only `block` mode is supported (tags are written at the bottom of the note).
 
-🧪 Compatibility
-Tested on macOS with Obsidian v1.5.8
+* **Add #new on create**
+  Automatically tag new notes with `#new`.
 
-Likely works on Windows and Linux (community testing welcome)
+* **Remove #new on rename**
+  Remove the `#new` tag after a note is moved/renamed.
 
-🛠 Installation
-Option 1: Community Plugins (when approved)
-Open Settings → Community Plugins
+* **Stamp date-time to title on create**
+  When enabled, new notes are created with their timestamp as filename.
 
-Click Browse and search for Alyok Autotag
+* **Block marker**
+  Change the marker string for the auto-tag block.
 
-Click Install, then Enable
+* **Rules (folder → tags)**
+  Add rules mapping folders to tags.
+  The UI provides a **dropdown of existing folders** (with fuzzy search) to avoid typos.
 
-Option 2: Manual Installation
-Download the latest release from the Releases page
+---
 
-Extract the files main.js, manifest.json, and README.md
+## 📸 Screenshots
 
-Place them in .obsidian/plugins/alyok-autotag inside your vault
+### Rules with folder dropdown
 
-📄 License
-MIT License — see LICENSE
+![Rules dropdown screenshot](./docs/screenshots/rules-dropdown.png)
+
+### Example note with tags
+
+![Note with tags screenshot](./docs/screenshots/note-tags.png)
+
+*(place images into `docs/screenshots/` in the repo; filenames can be adjusted)*
+
+---
+
+## 🚀 Installation
+
+### From source
+
+1. Clone this repository:
+
+   ```bash
+   git clone https://github.com/24tiy/Alyok-Autotag.git
+   cd Alyok-Autotag
+   ```
+
+2. Install dependencies:
+
+   ```bash
+   npm install
+   ```
+
+3. Build the plugin:
+
+   ```bash
+   npm run build
+   ```
+
+4. Copy the generated `main.js`, `manifest.json`, and `styles.css` into your Obsidian vault at:
+
+   ```
+   <vault>/.obsidian/plugins/alyok-autotag/
+   ```
+
+5. Enable the plugin in Obsidian’s **Community plugins** tab.
+
+---
+
+## 📖 Usage
+
+1. Define rules in settings (folder → tags).
+2. Create or move notes — tags will be applied automatically.
+3. Inspect the bottom of your note to see the `<!-- Alyok Autotag -->` block.
+
+---
+
+## ✅ Example
+
+If you create a note in folder `Work/Reports`, and you have this rule:
+
+```
+Work/Reports → #work #report
+```
+
+Then the note will automatically contain:
+
+```markdown
+<!-- Alyok Autotag -->
+#work
+#report
+#2025-08-31-14-35
+```
+
+---
+
+## 🛠 Development
+
+* Built with TypeScript.
+* Run `npm run dev` for incremental builds.
+* Run `npm run build` for production build.
+
+---
+
+## 📜 License
+
+MIT
+
+```
+```
