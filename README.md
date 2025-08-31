@@ -27,16 +27,6 @@ Helps keep your vault tidy without manually managing tags.
 
 ---
 
-## 📸 Screenshots
-
-### Rules with folder dropdown
-![Rules dropdown screenshot](./docs/screenshots/rules-dropdown.png)
-
-### Example note with tags
-![Note with tags screenshot](./docs/screenshots/note-tags.png)
-
----
-
 ## 🚀 Installation
 
 Download the latest release: [Alyok Autotag 1.0.0](https://github.com/24tiy/Alyok-Autotag/releases/tag/1.0.0)
