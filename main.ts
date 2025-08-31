@@ -41,21 +41,11 @@ function splitTags(s: string): string[] { return (s || "").split(/[\s,]+/).map(t
 function normalizeHash(tags: string[]): string[] {
   return uniq((tags || []).map(t => t.trim()).filter(Boolean).map(t => (t.startsWith("#") ? t : `#${t}`)));
 }
-function blockRegex(marker: string): RegExp {
-  return new RegExp(`${marker.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}[\\s\\S]*?$`);
-}
-function extractBlock(src: string, marker: string): string | null {
-  const re = blockRegex(marker); const m = src.match(re); return m ? m[0] : null;
-}
-function removeBlock(src: string, marker: string): string {
-  const re = blockRegex(marker); if (!re.test(src)) return src; return src.replace(re, "").replace(/\n{3,}$/, "\n\n");
-}
-function closeOpenFenceAtEOF(src: string): string {
-  const stripped = src.replace(FENCE_PAIR_RE, ""); if (OPEN_FENCE_AT_EOF_RE.test(stripped)) return src.replace(/\s*$/, "") + "\n```"; return src;
-}
-function findSafeAppendIndex(src: string): number {
-  let lastEnd = 0; let m: RegExpExecArray | null; while ((m = FENCE_PAIR_RE.exec(src))) lastEnd = m.index + m[0].length; return Math.max(lastEnd, src.length);
-}
+function blockRegex(marker: string): RegExp { return new RegExp(`${marker.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}[\\s\\S]*?$`); }
+function extractBlock(src: string, marker: string): string | null { const re = blockRegex(marker); const m = src.match(re); return m ? m[0] : null; }
+function removeBlock(src: string, marker: string): string { const re = blockRegex(marker); if (!re.test(src)) return src; return src.replace(re, "").replace(/\n{3,}$/, "\n\n"); }
+function closeOpenFenceAtEOF(src: string): string { const stripped = src.replace(FENCE_PAIR_RE, ""); if (OPEN_FENCE_AT_EOF_RE.test(stripped)) return src.replace(/\s*$/, "") + "\n```"; return src; }
+function findSafeAppendIndex(src: string): number { let lastEnd = 0; let m: RegExpExecArray | null; while ((m = FENCE_PAIR_RE.exec(src))) lastEnd = m.index + m[0].length; return Math.max(lastEnd, src.length); }
 function upsertBlock(src: string, marker: string, lines: string[]): string {
   const re = blockRegex(marker); const block = [marker, ...lines].join("\n");
   if (re.test(src)) return src.replace(re, block);
@@ -71,10 +61,18 @@ function tagsForPathByRules(path: string, rules: Rule[]): string[] {
   const all = matches.flatMap(r => splitTags(r.tags || "")); return normalizeHash(all);
 }
 function getAllFolderPaths(app: App): string[] {
-  const res = new Set<string>();
-  const files = app.vault.getAllLoadedFiles();
+  const res = new Set<string>(); const files = app.vault.getAllLoadedFiles();
   for (const f of files) if (f instanceof TFolder) res.add(f.path);
   const list = Array.from(res); list.sort((a, b) => a.localeCompare(b)); return list;
+}
+function dateTimeTag(file: TFile): string {
+  const d = new Date(file.stat.ctime);
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  const hh = String(d.getHours()).padStart(2, "0");
+  const mi = String(d.getMinutes()).padStart(2, "0");
+  return `#${yyyy}-${mm}-${dd}-${hh}-${mi}`;
 }
 
 class FolderSuggestModal extends FuzzySuggestModal<string> {
@@ -87,7 +85,6 @@ class FolderSuggestModal extends FuzzySuggestModal<string> {
 
 export default class AlyokAutotagPlugin extends Plugin {
   settings: AlyokAutotagSettings;
-
   constructor(app: App, manifest: PluginManifest) { super(app, manifest); }
 
   async onload() {
@@ -100,7 +97,11 @@ export default class AlyokAutotagPlugin extends Plugin {
   async onCreate(file: TFile) {
     try {
       const ruleTags = tagsForPathByRules(file.path, this.settings.rules);
-      const tags = normalizeHash([...ruleTags, ...(this.settings.addNewOnCreate && ruleTags.length === 0 ? ["#new"] : [])]);
+      const tags = normalizeHash([
+        ...ruleTags,
+        dateTimeTag(file),
+        ...(this.settings.addNewOnCreate && ruleTags.length === 0 ? ["#new"] : []),
+      ]);
       await this.writeTagsBlock(file, tags);
     } catch (e) { console.error("Alyok Autotag create error:", e); new Notice("Alyok Autotag: ошибка при создании"); }
   }
@@ -111,7 +112,7 @@ export default class AlyokAutotagPlugin extends Plugin {
       const prevBlock = extractBlock(content, this.settings.blockMarker);
       const prevHasNew = prevBlock ? /(^|\s)#new(\s|$)/.test(prevBlock) : false;
       const ruleTags = tagsForPathByRules(file.path, this.settings.rules);
-      let tags = normalizeHash(ruleTags);
+      let tags = normalizeHash([...ruleTags, dateTimeTag(file)]);
       if (!this.settings.removeNewOnRename && prevHasNew) tags = normalizeHash([...tags, "#new"]);
       await this.writeTagsBlock(file, tags);
     } catch (e) { console.error("Alyok Autotag rename error:", e); new Notice("Alyok Autotag: ошибка при перемещении"); }
