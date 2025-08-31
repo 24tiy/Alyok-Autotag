@@ -1,3 +1,5 @@
+https://github.com/24tiy/Alyok-Autotag/blob/main/alyok-autotag-demo.gif
+
 # Alyok Autotag
 
 Obsidian community plugin for **automatic tagging of notes** based on their folders, creation date, and user rules.  
