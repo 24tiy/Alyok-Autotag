@@ -1,6 +1,6 @@
-https://github.com/24tiy/Alyok-Autotag/blob/main/alyok-autotag-demo.gif
-
 # Alyok Autotag
+
+![Demo](https://github.com/24tiy/Alyok-Autotag/blob/main/alyok-autotag-demo.gif)
 
 Obsidian community plugin for **automatic tagging of notes** based on their folders, creation date, and user rules.  
 Helps keep your vault tidy without manually managing tags.
@@ -35,11 +35,13 @@ Download the latest release: [Alyok Autotag 1.0.0](https://github.com/24tiy/Alyo
 
 1. Unzip the archive.  
 2. Copy the folder `alyok-autotag` into your vault’s plugins folder:  
+
 ```
 
 <vault>/.obsidian/plugins/
 
 ```
+
 3. Enable **Alyok Autotag** in Obsidian’s *Community plugins* settings.
 
 ---
@@ -61,4 +63,4 @@ This project is licensed under the terms of the [MIT License](https://github.com
 ## 📦 Changelog
 
 - **[1.0.0](https://github.com/24tiy/Alyok-Autotag/releases/tag/1.0.0)** — Initial release with rules, `#new` tag, timestamp tag, safe block writing, and optional title stamping.
-```
+
