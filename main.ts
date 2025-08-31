@@ -120,7 +120,7 @@ export default class AlyokAutotagPlugin extends Plugin {
 
   async onCreate(file: TFile) {
     try {
-      file = await this.stampTitleIfEnabled(file);
+      file = await this.stampTitleIfEnabled(file); // ✅ только при создании
       const ruleTags = tagsForPathByRules(file.path, this.settings.rules);
       const tags = normalizeHash([
         ...ruleTags,
@@ -137,6 +137,7 @@ export default class AlyokAutotagPlugin extends Plugin {
       const prevBlock = extractBlock(content, this.settings.blockMarker);
       const prevHasNew = prevBlock ? /(^|\s)#new(\s|$)/.test(prevBlock) : false;
       const ruleTags = tagsForPathByRules(file.path, this.settings.rules);
+      // ⚡️ ВАЖНО: имя файла НЕ меняем!
       let tags = normalizeHash([...ruleTags, dateTimeTag(file)]);
       if (!this.settings.removeNewOnRename && prevHasNew) tags = normalizeHash([...tags, "#new"]);
       await this.writeTagsBlock(file, tags);
