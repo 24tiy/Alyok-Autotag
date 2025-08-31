@@ -12,10 +12,7 @@ import {
 
 type Mode = "block";
 
-interface Rule {
-  folder: string;
-  tags: string;
-}
+interface Rule { folder: string; tags: string; }
 
 interface AlyokAutotagSettings {
   mode: Mode;
@@ -23,6 +20,7 @@ interface AlyokAutotagSettings {
   addNewOnCreate: boolean;
   removeNewOnRename: boolean;
   blockMarker: string;
+  stampTitleOnCreate: boolean;
 }
 
 const DEFAULT_SETTINGS: AlyokAutotagSettings = {
@@ -31,6 +29,7 @@ const DEFAULT_SETTINGS: AlyokAutotagSettings = {
   addNewOnCreate: true,
   removeNewOnRename: true,
   blockMarker: "<!-- Alyok Autotag -->",
+  stampTitleOnCreate: false,
 };
 
 const FENCE_PAIR_RE = /```[\s\S]*?```|~~~[\s\S]*?~~~/g;
@@ -74,6 +73,15 @@ function dateTimeTag(file: TFile): string {
   const mi = String(d.getMinutes()).padStart(2, "0");
   return `#${yyyy}-${mm}-${dd}-${hh}-${mi}`;
 }
+function dateTimeName(file: TFile): string {
+  const d = new Date(file.stat.ctime);
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  const hh = String(d.getHours()).padStart(2, "0");
+  const mi = String(d.getMinutes()).padStart(2, "0");
+  return `${yyyy}-${mm}-${dd}-${hh}-${mi}`;
+}
 
 class FolderSuggestModal extends FuzzySuggestModal<string> {
   items: string[]; onChooseCb: (val: string) => void;
@@ -94,8 +102,25 @@ export default class AlyokAutotagPlugin extends Plugin {
     this.registerEvent(this.app.vault.on("rename", async (f) => { if (f instanceof TFile && f.extension === "md") await this.onRename(f); }));
   }
 
+  async stampTitleIfEnabled(file: TFile): Promise<TFile> {
+    if (!this.settings.stampTitleOnCreate) return file;
+    const dir = file.parent?.path ?? "";
+    const prefix = dir && dir !== "/" ? dir + "/" : "";
+    const base = dateTimeName(file);
+    let candidate = `${prefix}${base}.md`;
+    let i = 1;
+    while (this.app.vault.getAbstractFileByPath(candidate)) {
+      candidate = `${prefix}${base}-${i}.md`;
+      i++;
+    }
+    await this.app.fileManager.renameFile(file, candidate);
+    const newFile = this.app.vault.getAbstractFileByPath(candidate);
+    return (newFile as TFile) ?? file;
+  }
+
   async onCreate(file: TFile) {
     try {
+      file = await this.stampTitleIfEnabled(file);
       const ruleTags = tagsForPathByRules(file.path, this.settings.rules);
       const tags = normalizeHash([
         ...ruleTags,
@@ -149,6 +174,11 @@ class AlyokAutotagSettingTab extends PluginSettingTab {
     new Setting(containerEl)
       .setName("Remove #new on rename")
       .addToggle(t => t.setValue(this.plugin.settings.removeNewOnRename).onChange(async v => { this.plugin.settings.removeNewOnRename = v; await this.plugin.saveSettings(); }));
+
+    new Setting(containerEl)
+      .setName("Stamp date-time to title on create")
+      .setDesc("Название новой заметки по умолчанию будет вида 2025-08-31-14-35")
+      .addToggle(t => t.setValue(this.plugin.settings.stampTitleOnCreate).onChange(async v => { this.plugin.settings.stampTitleOnCreate = v; await this.plugin.saveSettings(); }));
 
     new Setting(containerEl)
       .setName("Block marker")
