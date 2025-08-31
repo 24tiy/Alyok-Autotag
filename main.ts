@@ -1,54 +1,62 @@
 import { App, Plugin, PluginManifest, TFile, Notice } from "obsidian";
 
-// ============ Alyok Autotag — Safe block-in-body mode ============
-
-// fenced-блоки (``` … ``` и ~~~ … ~~~) — сюда нельзя вставлять
-const FENCE_RE = /```[\s\S]*?```|~~~[\s\S]*?~~~/g;
+const FENCE_PAIR_RE = /```[\s\S]*?```|~~~[\s\S]*?~~~/g;
+const OPEN_FENCE_AT_EOF_RE = /(?:^|\n)(```|~~~)[^\n]*\n[\s\S]*$/;
 
 function normalizeTags(tags: string[]): string[] {
-  return Array.from(new Set(tags
-    .map(t => t.trim())
-    .filter(Boolean)
-    .map(t => (t.startsWith('#') ? t : `#${t}`))));
+  return Array.from(
+    new Set(
+      (tags || [])
+        .map((t) => String(t).trim())
+        .filter(Boolean)
+        .map((t) => (t.startsWith("#") ? t : `#${t}`))
+    )
+  );
 }
 
-// найти позицию после ПОСЛЕДНЕГО закрытого fenced-блока
+function closeOpenFenceAtEOF(src: string): { text: string; closed: boolean } {
+  const stripped = src.replace(FENCE_PAIR_RE, "");
+  if (OPEN_FENCE_AT_EOF_RE.test(stripped)) {
+    return { text: src.replace(/\s*$/, "") + "\n```", closed: true };
+  }
+  return { text: src, closed: false };
+}
+
 function findSafeAppendIndex(src: string): number {
   let lastEnd = 0;
   let m: RegExpExecArray | null;
-  while ((m = FENCE_RE.exec(src))) lastEnd = m.index + m[0].length;
+  while ((m = FENCE_PAIR_RE.exec(src))) lastEnd = m.index + m[0].length;
   return Math.max(lastEnd, src.length);
 }
 
-// заменить существующий Alyok-блок или вставить новый в безопасное место
 function upsertAlyokBlock(src: string, block: string): string {
-  const startMarker = '<!-- Alyok Autotag -->';
+  const startMarker = "<!-- Alyok Autotag -->";
   const re = new RegExp(`${startMarker}[\\s\\S]*?$`);
-  if (re.test(src)) {
-    return src.replace(re, block);
-  } else {
-    const at = findSafeAppendIndex(src);
-    const before = src.slice(0, at).replace(/\s*$/, '');
-    const after = src.slice(at);
-    return `${before}\n\n${block}\n${after}`;
-  }
+  if (re.test(src)) return src.replace(re, block);
+  const { text: closedText } = closeOpenFenceAtEOF(src);
+  const at = findSafeAppendIndex(closedText);
+  const before = closedText.slice(0, at).replace(/\s*$/, "");
+  const after = closedText.slice(at);
+  return `${before}\n\n${block}\n${after}`;
 }
 
-// вызываем это вместо старой вставки блока
 async function writeTagsBlockSafely(app: App, file: TFile, tags: string[]) {
   const content = await app.vault.read(file);
-  const lines = [
-    '<!-- Alyok Autotag -->',
-    ...normalizeTags(tags)
-  ];
-  const block = lines.join('\n');
+  const lines = ["<!-- Alyok Autotag -->", ...normalizeTags(tags)];
+  const block = lines.join("\n");
   const next = upsertAlyokBlock(content, block);
-  if (next !== content) {
-    await app.vault.modify(file, next);
-  }
+  if (next !== content) await app.vault.modify(file, next);
 }
 
-// ================================================================
+function getTagsForFile(file: TFile): string[] {
+  const parts = file.path.split("/");
+  const folders = parts.slice(0, -1);
+  return folders
+    .map((f) => f.trim())
+    .filter(Boolean)
+    .map((f) => f.toLowerCase().replace(/[^a-zа-я0-9_-]+/gi, "-"))
+    .filter(Boolean);
+}
 
 export default class AlyokAutotagPlugin extends Plugin {
   constructor(app: App, manifest: PluginManifest) {
@@ -56,9 +64,6 @@ export default class AlyokAutotagPlugin extends Plugin {
   }
 
   async onload() {
-    console.log("Alyok Autotag loaded ✅");
-
-    // обработка события при создании файла
     this.registerEvent(
       this.app.vault.on("create", async (file) => {
         if (file instanceof TFile && file.extension === "md") {
@@ -66,8 +71,6 @@ export default class AlyokAutotagPlugin extends Plugin {
         }
       })
     );
-
-    // обработка события при перемещении файла
     this.registerEvent(
       this.app.vault.on("rename", async (file) => {
         if (file instanceof TFile && file.extension === "md") {
@@ -79,24 +82,14 @@ export default class AlyokAutotagPlugin extends Plugin {
 
   async processFile(file: TFile) {
     try {
-      // Определяем теги на основе пути к файлу
-      // Например: notes/finance/budget.md → ['finance']
-      const parts = file.path.split("/");
-      const folderTags = parts
-        .slice(0, -1) // без имени файла
-        .map(f => f.toLowerCase().replace(/[^a-zа-я0-9_-]/gi, ""))
-        .filter(Boolean);
-
-      if (folderTags.length === 0) return;
-
-      await writeTagsBlockSafely(this.app, file, folderTags);
+      const tags = getTagsForFile(file);
+      if (!tags.length) return;
+      await writeTagsBlockSafely(this.app, file, tags);
     } catch (e) {
       console.error("Alyok Autotag error:", e);
-      new Notice("❌ Ошибка в Alyok Autotag (см. консоль)");
+      new Notice("❌ Alyok Autotag: ошибка — см. консоль");
     }
   }
 
-  onunload() {
-    console.log("Alyok Autotag unloaded ❌");
-  }
+  onunload() {}
 }
