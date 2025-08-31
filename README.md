@@ -75,6 +75,3 @@ This project is licensed under the terms of the [MIT License](https://github.com
 - Added `#new` tagging on create.  
 - Auto retagging on move/rename.  
 - Configurable block marker.
-
-
-Хочешь, я ещё добавлю **Roadmap** внизу (например: автотеги из имени файла, YAML-режим, статистика)?
