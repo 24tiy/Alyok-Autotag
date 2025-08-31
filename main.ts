@@ -1,137 +1,102 @@
-import {
-  Plugin,
-  TFile,
-  TFolder,
-  PluginSettingTab,
-  Setting
-} from "obsidian";
+import { App, Plugin, PluginManifest, TFile, Notice } from "obsidian";
 
-interface FolderTagRule {
-  folder: string;
-  tags: string[];
+// ============ Alyok Autotag — Safe block-in-body mode ============
+
+// fenced-блоки (``` … ``` и ~~~ … ~~~) — сюда нельзя вставлять
+const FENCE_RE = /```[\s\S]*?```|~~~[\s\S]*?~~~/g;
+
+function normalizeTags(tags: string[]): string[] {
+  return Array.from(new Set(tags
+    .map(t => t.trim())
+    .filter(Boolean)
+    .map(t => (t.startsWith('#') ? t : `#${t}`))));
 }
 
-interface AlyokAutotagSettings {
-  rules: FolderTagRule[];
+// найти позицию после ПОСЛЕДНЕГО закрытого fenced-блока
+function findSafeAppendIndex(src: string): number {
+  let lastEnd = 0;
+  let m: RegExpExecArray | null;
+  while ((m = FENCE_RE.exec(src))) lastEnd = m.index + m[0].length;
+  return Math.max(lastEnd, src.length);
 }
 
-const DEFAULT_SETTINGS: AlyokAutotagSettings = {
-  rules: []
-};
+// заменить существующий Alyok-блок или вставить новый в безопасное место
+function upsertAlyokBlock(src: string, block: string): string {
+  const startMarker = '<!-- Alyok Autotag -->';
+  const re = new RegExp(`${startMarker}[\\s\\S]*?$`);
+  if (re.test(src)) {
+    return src.replace(re, block);
+  } else {
+    const at = findSafeAppendIndex(src);
+    const before = src.slice(0, at).replace(/\s*$/, '');
+    const after = src.slice(at);
+    return `${before}\n\n${block}\n${after}`;
+  }
+}
 
-const AUTOTAG_MARKER = "<!-- Alyok Autotag -->";
+// вызываем это вместо старой вставки блока
+async function writeTagsBlockSafely(app: App, file: TFile, tags: string[]) {
+  const content = await app.vault.read(file);
+  const lines = [
+    '<!-- Alyok Autotag -->',
+    ...normalizeTags(tags)
+  ];
+  const block = lines.join('\n');
+  const next = upsertAlyokBlock(content, block);
+  if (next !== content) {
+    await app.vault.modify(file, next);
+  }
+}
+
+// ================================================================
 
 export default class AlyokAutotagPlugin extends Plugin {
-  settings: AlyokAutotagSettings;
+  constructor(app: App, manifest: PluginManifest) {
+    super(app, manifest);
+  }
 
   async onload() {
-    await this.loadSettings();
-    this.addSettingTab(new AlyokAutotagSettingTab(this.app, this));
+    console.log("Alyok Autotag loaded ✅");
 
+    // обработка события при создании файла
     this.registerEvent(
       this.app.vault.on("create", async (file) => {
         if (file instanceof TFile && file.extension === "md") {
-          await this.applyTags(file);
+          await this.processFile(file);
         }
       })
     );
 
+    // обработка события при перемещении файла
     this.registerEvent(
-      this.app.vault.on("rename", async (file, oldPath) => {
+      this.app.vault.on("rename", async (file) => {
         if (file instanceof TFile && file.extension === "md") {
-          await this.applyTags(file);
+          await this.processFile(file);
         }
       })
     );
   }
 
-  getRuleForPath(path: string): FolderTagRule | null {
-    const folder = path.split("/").slice(0, -1).join("/");
-    return this.settings.rules.find((r) => folder === r.folder) || null;
-  }
+  async processFile(file: TFile) {
+    try {
+      // Определяем теги на основе пути к файлу
+      // Например: notes/finance/budget.md → ['finance']
+      const parts = file.path.split("/");
+      const folderTags = parts
+        .slice(0, -1) // без имени файла
+        .map(f => f.toLowerCase().replace(/[^a-zа-я0-9_-]/gi, ""))
+        .filter(Boolean);
 
-  async applyTags(file: TFile) {
-    const rule = this.getRuleForPath(file.path);
-    const content = await this.app.vault.read(file);
+      if (folderTags.length === 0) return;
 
-    const tagBlock = rule
-      ? `${AUTOTAG_MARKER}\n${rule.tags.map((t) => `#${t}`).join(" ")}`
-      : `${AUTOTAG_MARKER}\n#new`;
-
-    let updated = content;
-
-    if (content.includes(AUTOTAG_MARKER)) {
-      updated = content.replace(new RegExp(`${AUTOTAG_MARKER}[\\s\\S]*`, "g"), tagBlock);
-    } else {
-      updated += `\n\n${tagBlock}`;
+      await writeTagsBlockSafely(this.app, file, folderTags);
+    } catch (e) {
+      console.error("Alyok Autotag error:", e);
+      new Notice("❌ Ошибка в Alyok Autotag (см. консоль)");
     }
-
-    await this.app.vault.modify(file, updated);
   }
 
-  async loadSettings() {
-    this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
-  }
-
-  async saveSettings() {
-    await this.saveData(this.settings);
-  }
-}
-
-class AlyokAutotagSettingTab extends PluginSettingTab {
-  plugin: AlyokAutotagPlugin;
-
-  constructor(app, plugin) {
-    super(app, plugin);
-    this.plugin = plugin;
-  }
-
-  display(): void {
-    const { containerEl } = this;
-    containerEl.empty();
-    containerEl.createEl("h2", { text: "Alyok Autotag Settings" });
-
-    const folders = this.app.vault.getAllLoadedFiles()
-      .filter((f) => f instanceof TFolder)
-      .map((f) => f.path);
-
-    this.plugin.settings.rules.forEach((rule, index) => {
-      new Setting(containerEl)
-        .setName(`Rule ${index + 1}`)
-        .addDropdown(drop => {
-          folders.forEach(path => drop.addOption(path, path));
-          drop.setValue(rule.folder);
-          drop.onChange(async (value) => {
-            this.plugin.settings.rules[index].folder = value;
-            await this.plugin.saveSettings();
-          });
-        })
-        .addText(text => text
-          .setPlaceholder("tag1, tag2")
-          .setValue(rule.tags.join(", "))
-          .onChange(async (value) => {
-            this.plugin.settings.rules[index].tags = value.split(",").map((t) => t.trim());
-            await this.plugin.saveSettings();
-          }))
-        .addExtraButton(button => {
-          button.setIcon("cross")
-            .setTooltip("Delete rule")
-            .onClick(async () => {
-              this.plugin.settings.rules.splice(index, 1);
-              await this.plugin.saveSettings();
-              this.display();
-            });
-        });
-    });
-
-    new Setting(containerEl)
-      .addButton(button => {
-        button.setButtonText("Add rule")
-          .onClick(async () => {
-            this.plugin.settings.rules.push({ folder: "", tags: [] });
-            await this.plugin.saveSettings();
-            this.display();
-          });
-      });
+  onunload() {
+    console.log("Alyok Autotag unloaded ❌");
   }
 }
