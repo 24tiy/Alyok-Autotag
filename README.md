@@ -63,15 +63,12 @@ This project is licensed under the terms of the [MIT License](https://github.com
 ---
 
 ## 📦 Changelog
-
-- **[1.0.1](https://github.com/24tiy/Alyok-Autotag/releases/tag/1.0.1)**  
-- Added automatic **date-time tag** in format `#YYYY-MM-DD-HH-MM`.  
-- Added **optional setting**: use date-time as the **default note title** on creation.  
-- UI improvement: folder rules now use a dropdown with existing folders (to avoid typos).  
-- Improved safety: tag block is never inserted into unfinished code blocks (fix for Dataview).  
-
 - **[1.0.0](https://github.com/24tiy/Alyok-Autotag/releases/tag/1.0.0)**  
 - Initial release with folder → tags rules.  
 - Added `#new` tagging on create.  
 - Auto retagging on move/rename.  
 - Configurable block marker.
+- Added automatic **date-time tag** in format `#YYYY-MM-DD-HH-MM`.  
+- Added **optional setting**: use date-time as the **default note title** on creation.  
+- UI improvement: folder rules now use a dropdown with existing folders (to avoid typos).  
+- Improved safety: tag block is never inserted into unfinished code blocks (fix for Dataview). 
