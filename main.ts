@@ -176,7 +176,7 @@ export default class AlyokAutotagPlugin extends Plugin {
       await this.writeTagsBlock(file, tags);
     } catch (e) {
       console.error("Alyok Autotag create error:", e);
-      new Notice("Alyok Autotag: error on create");
+      new Notice("Alyok Autotag: Error on create");
     }
   }
 
@@ -194,7 +194,7 @@ export default class AlyokAutotagPlugin extends Plugin {
       await this.writeTagsBlock(file, tags);
     } catch (e) {
       console.error("Alyok Autotag rename error:", e);
-      new Notice("Alyok Autotag: error on rename");
+      new Notice("Alyok Autotag: Error on rename");
     }
   }
 
@@ -303,10 +303,9 @@ class AlyokAutotagSettingTab extends PluginSettingTab {
           btn.setIcon("folder");
           btn.setTooltip("Choose folder…");
           btn.onClick(() => {
-            const modal = new FolderSuggestModal(this.app, allFolders, async (chosen) => {
+            const modal = new FolderSuggestModal(this.app, allFolders, (chosen) => {
               this.plugin.settings.rules[idx].folder = chosen;
-              await this.plugin.saveSettings();
-              renderRules();
+              this.plugin.saveSettings().then(() => renderRules());
             });
             modal.open();
           });
