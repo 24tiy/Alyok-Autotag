@@ -161,12 +161,12 @@ export default class AlyokAutotagPlugin extends Plugin {
 
     await this.app.fileManager.renameFile(file, candidate);
     const newFile = this.app.vault.getAbstractFileByPath(candidate);
-    return newFile instanceof TFile ? newFile : file; // ← ключевая правка
+    return newFile instanceof TFile ? newFile : file;
   }
 
   async onCreate(file: TFile) {
     try {
-      file = await this.stampTitleIfEnabled(file); // только при создании
+      file = await this.stampTitleIfEnabled(file);
       const ruleTags = tagsForPathByRules(file.path, this.settings.rules);
       const tags = normalizeHash([
         ...ruleTags,
@@ -176,7 +176,7 @@ export default class AlyokAutotagPlugin extends Plugin {
       await this.writeTagsBlock(file, tags);
     } catch (e) {
       console.error("Alyok Autotag create error:", e);
-      new Notice("Alyok Autotag: ошибка при создании");
+      new Notice("Alyok Autotag: error on create");
     }
   }
 
@@ -187,7 +187,6 @@ export default class AlyokAutotagPlugin extends Plugin {
       const prevHasNew = prevBlock ? /(^|\s)#new(\s|$)/.test(prevBlock) : false;
 
       const ruleTags = tagsForPathByRules(file.path, this.settings.rules);
-      // имя файла при переименовании/перемещении не трогаем
       let tags = normalizeHash([...ruleTags, dateTimeTag(file)]);
       if (!this.settings.removeNewOnRename && prevHasNew) {
         tags = normalizeHash([...tags, "#new"]);
@@ -195,7 +194,7 @@ export default class AlyokAutotagPlugin extends Plugin {
       await this.writeTagsBlock(file, tags);
     } catch (e) {
       console.error("Alyok Autotag rename error:", e);
-      new Notice("Alyok Autotag: ошибка при перемещении");
+      new Notice("Alyok Autotag: error on rename");
     }
   }
 
@@ -258,7 +257,7 @@ class AlyokAutotagSettingTab extends PluginSettingTab {
 
     new Setting(containerEl)
       .setName("Stamp date-time to title on create")
-      .setDesc("Название новой заметки по умолчанию будет вида 2025-08-31-14-35")
+      .setDesc("New note title will default to format 2025-08-31-14-35")
       .addToggle(t =>
         t.setValue(this.plugin.settings.stampTitleOnCreate)
           .onChange(async v => {
@@ -277,7 +276,7 @@ class AlyokAutotagSettingTab extends PluginSettingTab {
           })
       );
 
-    containerEl.createEl("h3", { text: "Rules (folder → tags)" });
+    new Setting(containerEl).setHeading().setName("Rules (folder → tags)");
     const rulesWrap = containerEl.createDiv();
 
     const renderRules = () => {
