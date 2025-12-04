@@ -282,7 +282,7 @@ class AlyokAutotagSettingTab extends PluginSettingTab {
     const renderRules = () => {
       rulesWrap.empty();
       const allFolders = getAllFolderPaths(this.app);
-      const options: Record<string, string> = { "": "— select folder —" };
+      const options: Record<string, string> = { "": "— Select folder —" };
       allFolders.forEach(p => (options[p] = p));
 
       this.plugin.settings.rules.forEach((rule, idx) => {
@@ -305,7 +305,7 @@ class AlyokAutotagSettingTab extends PluginSettingTab {
           btn.onClick(() => {
             const modal = new FolderSuggestModal(this.app, allFolders, (chosen) => {
               this.plugin.settings.rules[idx].folder = chosen;
-              this.plugin.saveSettings().then(() => renderRules());
+              void this.plugin.saveSettings().then(() => renderRules());
             });
             modal.open();
           });
