@@ -176,7 +176,7 @@ export default class AlyokAutotagPlugin extends Plugin {
       await this.writeTagsBlock(file, tags);
     } catch (e) {
       console.error("Alyok Autotag create error:", e);
-      new Notice("Alyok Autotag: error on create");
+      new Notice("Alyok Autotag: Error on create");
     }
   }
 
@@ -194,7 +194,7 @@ export default class AlyokAutotagPlugin extends Plugin {
       await this.writeTagsBlock(file, tags);
     } catch (e) {
       console.error("Alyok Autotag rename error:", e);
-      new Notice("Alyok Autotag: error on rename");
+      new Notice("Alyok Autotag: Error on rename");
     }
   }
 
@@ -236,7 +236,7 @@ class AlyokAutotagSettingTab extends PluginSettingTab {
       );
 
     new Setting(containerEl)
-      .setName("Add #new tag on create")
+      .setName("Add #new on create")
       .addToggle(t =>
         t.setValue(this.plugin.settings.addNewOnCreate)
           .onChange(async v => {
@@ -246,7 +246,7 @@ class AlyokAutotagSettingTab extends PluginSettingTab {
       );
 
     new Setting(containerEl)
-      .setName("Remove #new tag on rename")
+      .setName("Remove #new on rename")
       .addToggle(t =>
         t.setValue(this.plugin.settings.removeNewOnRename)
           .onChange(async v => {
@@ -256,7 +256,7 @@ class AlyokAutotagSettingTab extends PluginSettingTab {
       );
 
     new Setting(containerEl)
-      .setName("Stamp date-time title on create")
+      .setName("Stamp date-time to title on create")
       .setDesc("New note title will default to format 2025-08-31-14-35")
       .addToggle(t =>
         t.setValue(this.plugin.settings.stampTitleOnCreate)
