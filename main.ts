@@ -236,7 +236,7 @@ class AlyokAutotagSettingTab extends PluginSettingTab {
       );
 
     new Setting(containerEl)
-      .setName("Add #new on create")
+      .setName("Add #new tag on create")
       .addToggle(t =>
         t.setValue(this.plugin.settings.addNewOnCreate)
           .onChange(async v => {
@@ -246,7 +246,7 @@ class AlyokAutotagSettingTab extends PluginSettingTab {
       );
 
     new Setting(containerEl)
-      .setName("Remove #new on rename")
+      .setName("Remove #new tag on rename")
       .addToggle(t =>
         t.setValue(this.plugin.settings.removeNewOnRename)
           .onChange(async v => {
@@ -256,7 +256,7 @@ class AlyokAutotagSettingTab extends PluginSettingTab {
       );
 
     new Setting(containerEl)
-      .setName("Stamp date-time to title on create")
+      .setName("Stamp date-time title on create")
       .setDesc("New note title will default to format 2025-08-31-14-35")
       .addToggle(t =>
         t.setValue(this.plugin.settings.stampTitleOnCreate)
