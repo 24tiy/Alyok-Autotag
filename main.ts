@@ -176,7 +176,7 @@ export default class AlyokAutotagPlugin extends Plugin {
       await this.writeTagsBlock(file, tags);
     } catch (e) {
       console.error("Alyok Autotag create error:", e);
-      new Notice("Alyok Autotag: Error on create");
+      new Notice("Alyok Autotag: error on create");
     }
   }
 
@@ -194,7 +194,7 @@ export default class AlyokAutotagPlugin extends Plugin {
       await this.writeTagsBlock(file, tags);
     } catch (e) {
       console.error("Alyok Autotag rename error:", e);
-      new Notice("Alyok Autotag: Error on rename");
+      new Notice("Alyok Autotag: error on rename");
     }
   }
 
@@ -227,7 +227,7 @@ class AlyokAutotagSettingTab extends PluginSettingTab {
     new Setting(containerEl)
       .setName("Mode")
       .addDropdown(d =>
-        d.addOption("block", "block")
+        d.addOption("block", "Block")
           .setValue(this.plugin.settings.mode)
           .onChange(async (v: Mode) => {
             this.plugin.settings.mode = v;
@@ -276,13 +276,13 @@ class AlyokAutotagSettingTab extends PluginSettingTab {
           })
       );
 
-    new Setting(containerEl).setHeading().setName("Rules (folder → tags)");
+    new Setting(containerEl).setHeading().setName("Rules");
     const rulesWrap = containerEl.createDiv();
 
     const renderRules = () => {
       rulesWrap.empty();
       const allFolders = getAllFolderPaths(this.app);
-      const options: Record<string, string> = { "": "— Select folder —" };
+      const options: Record<string, string> = { "": "Select folder" };
       allFolders.forEach(p => (options[p] = p));
 
       this.plugin.settings.rules.forEach((rule, idx) => {
@@ -301,7 +301,7 @@ class AlyokAutotagSettingTab extends PluginSettingTab {
 
         s.addExtraButton(btn => {
           btn.setIcon("folder");
-          btn.setTooltip("Choose folder…");
+          btn.setTooltip("Choose folder");
           btn.onClick(() => {
             const modal = new FolderSuggestModal(this.app, allFolders, (chosen) => {
               this.plugin.settings.rules[idx].folder = chosen;
