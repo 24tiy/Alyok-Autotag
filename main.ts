@@ -176,7 +176,7 @@ export default class AlyokAutotagPlugin extends Plugin {
       await this.writeTagsBlock(file, tags);
     } catch (e) {
       console.error("Alyok Autotag create error:", e);
-      new Notice("Alyok Autotag: Error on create");
+      new Notice("Alyok Autotag: error on create");
     }
   }
 
@@ -194,7 +194,7 @@ export default class AlyokAutotagPlugin extends Plugin {
       await this.writeTagsBlock(file, tags);
     } catch (e) {
       console.error("Alyok Autotag rename error:", e);
-      new Notice("Alyok Autotag: Error on rename");
+      new Notice("Alyok Autotag: error on rename");
     }
   }
 
