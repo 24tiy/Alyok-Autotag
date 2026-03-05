@@ -172,7 +172,7 @@ export default class AlyokAutotagPlugin extends Plugin {
       const ruleTags = tagsForPathByRules(file.path, this.settings.rules);
       const tags = normalizeHash([
         ...ruleTags,
-        (this.settings.addStamp ? dateTimeTag(file) : ")"),
+        (this.settings.addStamp ? dateTimeTag(file) : ""),
         ...(this.settings.addNewOnCreate && ruleTags.length === 0 ? ["#new"] : []),
       ]);
       await this.writeTagsBlock(file, tags);
@@ -189,7 +189,7 @@ export default class AlyokAutotagPlugin extends Plugin {
       const prevHasNew = prevBlock ? /(^|\s)#new(\s|$)/.test(prevBlock) : false;
 
       const ruleTags = tagsForPathByRules(file.path, this.settings.rules);
-      let tags = normalizeHash([...ruleTags, (this.settings.addStamp ? dateTimeTag(file) : ")")]);
+      let tags = normalizeHash([...ruleTags, (this.settings.addStamp ? dateTimeTag(file) : "")]);
       if (!this.settings.removeNewOnRename && prevHasNew) {
         tags = normalizeHash([...tags, "#new"]);
       }
