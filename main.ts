@@ -23,6 +23,7 @@ interface AlyokAutotagSettings {
   addNewOnCreate: boolean;
   removeNewOnRename: boolean;
   blockMarker: string;
+  addStamp: boolean;
   stampTitleOnCreate: boolean;
 }
 
@@ -32,6 +33,7 @@ const DEFAULT_SETTINGS: AlyokAutotagSettings = {
   addNewOnCreate: true,
   removeNewOnRename: true,
   blockMarker: "<!-- Alyok Autotag -->",
+  addStamp: false,
   stampTitleOnCreate: false,
 };
 
@@ -170,7 +172,7 @@ export default class AlyokAutotagPlugin extends Plugin {
       const ruleTags = tagsForPathByRules(file.path, this.settings.rules);
       const tags = normalizeHash([
         ...ruleTags,
-        dateTimeTag(file),
+        (this.settings.addStamp ? dateTimeTag(file) : ")"),
         ...(this.settings.addNewOnCreate && ruleTags.length === 0 ? ["#new"] : []),
       ]);
       await this.writeTagsBlock(file, tags);
@@ -187,7 +189,7 @@ export default class AlyokAutotagPlugin extends Plugin {
       const prevHasNew = prevBlock ? /(^|\s)#new(\s|$)/.test(prevBlock) : false;
 
       const ruleTags = tagsForPathByRules(file.path, this.settings.rules);
-      let tags = normalizeHash([...ruleTags, dateTimeTag(file)]);
+      let tags = normalizeHash([...ruleTags, (this.settings.addStamp ? dateTimeTag(file) : ")")]);
       if (!this.settings.removeNewOnRename && prevHasNew) {
         tags = normalizeHash([...tags, "#new"]);
       }
@@ -255,6 +257,17 @@ class AlyokAutotagSettingTab extends PluginSettingTab {
           })
       );
 
+    new Setting(containerEl)
+      .setName("Stamp date-time as additional tag")
+      .setDesc("Always add timestamp to any notes")
+      .addToggle(t =>
+        t.setValue(this.plugin.settings.addStamp)
+          .onChange(async v => {
+            this.plugin.settings.addStamp = v;
+            await this.plugin.saveSettings();
+          })
+    );
+    
     new Setting(containerEl)
       .setName("Stamp date-time to title on create")
       .setDesc("New note title will default to format 2025-08-31-14-35")
