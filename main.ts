@@ -1,5 +1,6 @@
 import {
   App,
+  Modal,
   Notice,
   Plugin,
   PluginManifest,
@@ -120,6 +121,20 @@ function dateTimeName(file: TFile): string {
   return `${yyyy}-${mm}-${dd}-${hh}-${mi}`;
 }
 
+/**
+ * Returns folder paths that have no matching rule with non-empty tags.
+ * Root folder ("/") is excluded.
+ */
+function getUntaggedFolders(app: App, rules: Rule[]): string[] {
+  const allFolders = getAllFolderPaths(app);
+  const coveredFolders = new Set(
+    rules
+      .filter(r => r.folder && splitTags(r.tags).length > 0)
+      .map(r => r.folder.replace(/^\/+|\/+$/g, ""))
+  );
+  return allFolders.filter(f => f && f !== "/" && !coveredFolders.has(f));
+}
+
 class FolderSuggestModal extends FuzzySuggestModal<string> {
   items: string[];
   onChooseCb: (val: string) => void;
@@ -131,6 +146,41 @@ class FolderSuggestModal extends FuzzySuggestModal<string> {
   getItems(): string[] { return this.items; }
   getItemText(item: string): string { return item || "/"; }
   onChooseItem(item: string): void { this.onChooseCb(item); }
+}
+
+class UntaggedFoldersModal extends Modal {
+  folders: string[];
+
+  constructor(app: App, folders: string[]) {
+    super(app);
+    this.folders = folders;
+  }
+
+  onOpen() {
+    const { contentEl } = this;
+    contentEl.empty();
+    contentEl.createEl("h3", { text: "Folders without tag rules" });
+
+    if (this.folders.length === 0) {
+      contentEl.createEl("p", {
+        text: "All folders are covered by rules.",
+      });
+      return;
+    }
+
+    contentEl.createEl("p", {
+      text: `Found ${this.folders.length} folder(s) with no rules:`,
+    });
+
+    const list = contentEl.createEl("ul");
+    for (const f of this.folders) {
+      list.createEl("li", { text: f });
+    }
+  }
+
+  onClose() {
+    this.contentEl.empty();
+  }
 }
 
 export default class AlyokAutotagPlugin extends Plugin {
@@ -290,6 +340,17 @@ class AlyokAutotagSettingTab extends PluginSettingTab {
       );
 
     new Setting(containerEl).setHeading().setName("Rules");
+
+    new Setting(containerEl)
+      .setName("Show untagged folders")
+      .setDesc("List folders that have no tag rules assigned")
+      .addButton(b =>
+        b.setButtonText("Show").onClick(() => {
+          const untagged = getUntaggedFolders(this.app, this.plugin.settings.rules);
+          new UntaggedFoldersModal(this.app, untagged).open();
+        })
+      );
+
     const rulesWrap = containerEl.createDiv();
 
     const renderRules = () => {
