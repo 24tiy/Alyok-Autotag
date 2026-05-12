@@ -135,6 +135,16 @@ function getUntaggedFolders(app: App, rules: Rule[]): string[] {
   return allFolders.filter(f => f && f !== "/" && !coveredFolders.has(f));
 }
 
+/**
+ * Extracts the leaf folder name as a tag.
+ * "Projects/Work/Design" → "#Design"
+ */
+function folderNameAsTag(folderPath: string): string {
+  const parts = folderPath.split("/").filter(Boolean);
+  const leaf = parts[parts.length - 1] || folderPath;
+  return `#${leaf}`;
+}
+
 class FolderSuggestModal extends FuzzySuggestModal<string> {
   items: string[];
   onChooseCb: (val: string) => void;
@@ -176,6 +186,85 @@ class UntaggedFoldersModal extends Modal {
     for (const f of this.folders) {
       list.createEl("li", { text: f });
     }
+  }
+
+  onClose() {
+    this.contentEl.empty();
+  }
+}
+
+class AutoRuleModal extends Modal {
+  plugin: AlyokAutotagPlugin;
+  onDone: () => void;
+
+  constructor(app: App, plugin: AlyokAutotagPlugin, onDone: () => void) {
+    super(app);
+    this.plugin = plugin;
+    this.onDone = onDone;
+  }
+
+  onOpen() {
+    const { contentEl } = this;
+    contentEl.empty();
+    contentEl.createEl("h3", { text: "Auto-create rules from folder names" });
+    contentEl.createEl("p", {
+      text: "Each folder gets a tag matching its name (e.g. folder \"Work\" → #Work).",
+    });
+
+    new Setting(contentEl)
+      .setName("Only untagged folders")
+      .setDesc("Add rules only for folders that don't have any rule yet")
+      .addButton(b =>
+        b.setButtonText("Apply").setCta().onClick(async () => {
+          await this.autoCreateRules(false);
+          this.close();
+        })
+      );
+
+    new Setting(contentEl)
+      .setName("All folders (overwrite)")
+      .setDesc("Create/overwrite rules for every folder, replacing existing tags")
+      .addButton(b =>
+        b.setButtonText("Apply").setWarning().onClick(async () => {
+          await this.autoCreateRules(true);
+          this.close();
+        })
+      );
+  }
+
+  async autoCreateRules(overwriteAll: boolean) {
+    const allFolders = getAllFolderPaths(this.app).filter(f => f && f !== "/");
+    const rules = this.plugin.settings.rules;
+
+    if (overwriteAll) {
+      const ruleMap = new Map<string, number>();
+      rules.forEach((r, i) => ruleMap.set(r.folder.replace(/^\/+|\/+$/g, ""), i));
+
+      for (const folder of allFolders) {
+        const tag = folderNameAsTag(folder);
+        const existingIdx = ruleMap.get(folder);
+        if (existingIdx !== undefined) {
+          rules[existingIdx].tags = tag;
+        } else {
+          rules.push({ folder, tags: tag });
+        }
+      }
+    } else {
+      const coveredFolders = new Set(
+        rules
+          .filter(r => r.folder && splitTags(r.tags).length > 0)
+          .map(r => r.folder.replace(/^\/+|\/+$/g, ""))
+      );
+      for (const folder of allFolders) {
+        if (!coveredFolders.has(folder)) {
+          rules.push({ folder, tags: folderNameAsTag(folder) });
+        }
+      }
+    }
+
+    await this.plugin.saveSettings();
+    new Notice(`Rules updated: ${rules.length} total`);
+    this.onDone();
   }
 
   onClose() {
@@ -257,6 +346,26 @@ export default class AlyokAutotagPlugin extends Plugin {
     const lines = normalizeHash(tagsHash);
     const next = lines.length > 0 ? upsertBlock(content, marker, lines) : removeBlock(content, marker);
     if (next !== content) await this.app.vault.modify(file, next);
+  }
+
+  /**
+   * Applies current rules to all .md notes in folders that have rules.
+   * Rewrites the tag block in each matching note.
+   */
+  async applyTagsToAllNotes(): Promise<number> {
+    const allFiles = this.app.vault.getMarkdownFiles();
+    let count = 0;
+    for (const file of allFiles) {
+      const ruleTags = tagsForPathByRules(file.path, this.settings.rules);
+      if (ruleTags.length === 0) continue;
+      const tags = normalizeHash([
+        ...ruleTags,
+        (this.settings.addStamp ? dateTimeTag(file) : ""),
+      ]);
+      await this.writeTagsBlock(file, tags);
+      count++;
+    }
+    return count;
   }
 
   async loadSettings() {
@@ -348,6 +457,25 @@ class AlyokAutotagSettingTab extends PluginSettingTab {
         b.setButtonText("Show").onClick(() => {
           const untagged = getUntaggedFolders(this.app, this.plugin.settings.rules);
           new UntaggedFoldersModal(this.app, untagged).open();
+        })
+      );
+
+    new Setting(containerEl)
+      .setName("Auto-create rules from folder names")
+      .setDesc("Tag = folder name (e.g. folder \"Work\" → #Work)")
+      .addButton(b =>
+        b.setButtonText("Create rules…").onClick(() => {
+          new AutoRuleModal(this.app, this.plugin, () => this.display()).open();
+        })
+      );
+
+    new Setting(containerEl)
+      .setName("Apply tags to all notes")
+      .setDesc("Retag every note in folders that have rules (rewrites tag blocks)")
+      .addButton(b =>
+        b.setButtonText("Apply now").setWarning().onClick(async () => {
+          const count = await this.plugin.applyTagsToAllNotes();
+          new Notice(`Alyok Autotag: updated ${count} note(s)`);
         })
       );
 
