@@ -416,7 +416,7 @@ export default class AlyokAutotag extends Plugin {
   }
 
   refreshSettings() {
-    if (this.settingTab.containerEl.isConnected) this.settingTab.display();
+    this.settingTab.update();
   }
 
   async loadSettings() {
@@ -424,7 +424,9 @@ export default class AlyokAutotag extends Plugin {
     const data: Settings = { ...DEFAULT_SETTINGS, ...saved };
     data.mode = data.mode === "properties" ? "properties" : "block";
     data.rules = Array.isArray(data.rules)
-      ? data.rules.filter(r => r && typeof r.folder === "string").map(r => ({ folder: cleanPath(r.folder), tags: String(r.tags ?? "") }))
+      ? data.rules
+          .filter(r => r && typeof r.folder === "string" && cleanPath(r.folder))
+          .map(r => ({ folder: cleanPath(r.folder), tags: String(r.tags ?? "") }))
       : [];
     data.skipped = Array.isArray(data.skipped) ? data.skipped.map(cleanPath).filter(Boolean) : [];
     data.newTag = splitTags(data.newTag)[0] || DEFAULT_SETTINGS.newTag;

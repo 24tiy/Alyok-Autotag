@@ -128,7 +128,7 @@ export class AutoRulesModal extends Modal {
     new Setting(contentEl)
       .setName("All folders")
       .setDesc("Replaces tags in existing rules.")
-      .addButton(b => b.setButtonText("Create").setWarning().onClick(() => run(true)));
+      .addButton(b => b.setButtonText("Create").setDestructive().onClick(() => run(true)));
   }
 
   onClose() {
@@ -149,7 +149,8 @@ export class ApplyModal extends Modal {
       .addButton(b =>
         b
           .setButtonText("Apply")
-          .setWarning()
+          .setDestructive()
+          .setCta()
           .onClick(() => {
             this.close();
             this.plugin.applyToAll();

@@ -29,7 +29,7 @@ With the `tags` property the plugin only adds and removes the tags of its rules,
 
 ## Rules
 
-In the settings: pick a folder and type the tags, `#tag1 #tag2` or `tag1, tag2`.
+In the settings: add a rule, pick a folder and type the tags, `#tag1 #tag2` or `tag1, tag2`. A new rule starts with the folder name as its tag.
 
 From the file explorer: right-click a folder (long-press on mobile) and choose "Autotag rule". On a phone this is the fastest way. When you save a rule there, the notes already in the folder get the new tags right away, and tags you removed from the rule are taken off them.
 
@@ -59,7 +59,7 @@ With [BRAT](https://github.com/TfTHacker/obsidian42-brat), this works on mobile 
 
 Manually: download `main.js`, `manifest.json` and `styles.css` from the [latest release](https://github.com/24tiy/Alyok-Autotag/releases/latest) into `<vault>/.obsidian/plugins/alyok-autotag/`, then turn on Alyok Autotag in Settings, Community plugins.
 
-Needs Obsidian 1.8.7 or newer.
+Needs Obsidian 1.13 or newer. On older versions Obsidian installs 1.1.1.
 
 ## Building
 
@@ -72,6 +72,12 @@ npm run lint
 `npm run lint` runs the official Obsidian ESLint rules, the same ones the community directory checks.
 
 ## Changelog
+
+### 1.2.0
+
+- Settings use the new Obsidian settings API, so they show up in the settings search.
+- Release files come with GitHub build attestations.
+- Needs Obsidian 1.13 or newer, older versions get 1.1.1.
 
 ### 1.1.1
 
