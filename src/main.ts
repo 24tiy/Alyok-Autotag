@@ -1,5 +1,4 @@
 import { MarkdownView, Menu, Notice, Plugin, TAbstractFile, TFile, TFolder, Vault, getFrontMatterInfo, normalizePath, parseYaml } from "obsidian";
-import { t } from "./i18n";
 import { ApplyModal, FolderRuleModal, UntaggedModal } from "./modals";
 import { DEFAULT_SETTINGS, Settings, SettingTab } from "./settings";
 import {
@@ -115,14 +114,14 @@ export default class AlyokAutotag extends Plugin {
   private addCommands() {
     this.addCommand({
       id: "retag-current-note",
-      name: t("cmdRetag"),
+      name: "Retag current note",
       checkCallback: checking => {
         const file = this.app.workspace.getActiveFile();
         if (!file || file.extension !== "md") return false;
         if (!checking) {
           this.enqueue(file, async () => {
-            if (this.isSkipped(file.path)) new Notice(t("retagSkipped"));
-            else new Notice((await this.retag(file)) ? t("retagDone") : t("retagSame"));
+            if (this.isSkipped(file.path)) new Notice("This folder is skipped");
+            else new Notice((await this.retag(file)) ? "Tags updated" : "Nothing to change");
           });
         }
         return true;
@@ -130,17 +129,17 @@ export default class AlyokAutotag extends Plugin {
     });
     this.addCommand({
       id: "apply-to-all-notes",
-      name: t("cmdApply"),
+      name: "Apply rules to all notes",
       callback: () => new ApplyModal(this.app, this).open(),
     });
     this.addCommand({
       id: "show-folders-without-rules",
-      name: t("cmdUntagged"),
+      name: "Show folders without rules",
       callback: () => new UntaggedModal(this.app, this).open(),
     });
     this.addCommand({
       id: "rule-for-current-folder",
-      name: t("cmdFolderRule"),
+      name: "Rule for the current folder",
       checkCallback: checking => {
         const folder = this.app.workspace.getActiveFile()?.parent;
         if (!folder || folder.isRoot()) return false;
@@ -154,7 +153,7 @@ export default class AlyokAutotag extends Plugin {
     if (!(file instanceof TFolder) || file.isRoot()) return;
     menu.addItem(item =>
       item
-        .setTitle(t("menuRule"))
+        .setTitle("Autotag rule")
         .setIcon("tags")
         .onClick(() => new FolderRuleModal(this.app, this, file.path).open())
     );
@@ -166,7 +165,7 @@ export default class AlyokAutotag extends Plugin {
         await task();
       } catch (e) {
         console.error("Alyok Autotag:", file?.path ?? "", e);
-        if (file) new Notice(t("error", { file: file.basename }));
+        if (file) new Notice(`Alyok Autotag: couldn't update ${file.basename}, see the console`);
       }
     });
     if (!this.draining) void this.drain();
@@ -294,7 +293,7 @@ export default class AlyokAutotag extends Plugin {
   }
 
   private async retagFiles(files: TFile[], drop: string[] = []) {
-    const progress = new Notice(t("applyProgress", { done: 0, total: files.length }), 0);
+    const progress = new Notice(`Alyok Autotag: 0 of ${files.length}`, 0);
     let updated = 0;
     for (let i = 0; i < files.length; i++) {
       try {
@@ -302,10 +301,10 @@ export default class AlyokAutotag extends Plugin {
       } catch (e) {
         console.error("Alyok Autotag:", files[i].path, e);
       }
-      if (i % 20 === 19) progress.setMessage(t("applyProgress", { done: i + 1, total: files.length }));
+      if (i % 20 === 19) progress.setMessage(`Alyok Autotag: ${i + 1} of ${files.length}`);
     }
     progress.hide();
-    new Notice(t("applyDone", { n: updated }));
+    new Notice(`Alyok Autotag: notes updated: ${updated}`);
   }
 
   applyToAll() {
@@ -413,7 +412,7 @@ export default class AlyokAutotag extends Plugin {
     }
     await this.saveSettings();
     this.refreshSettings();
-    new Notice(t("autoDone", { added, updated }));
+    new Notice(`Rules added: ${added}, updated: ${updated}`);
   }
 
   refreshSettings() {

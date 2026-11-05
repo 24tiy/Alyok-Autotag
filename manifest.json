@@ -1,7 +1,7 @@
 {
   "id": "alyok-autotag",
   "name": "Alyok Autotag",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "minAppVersion": "1.8.7",
   "description": "Tag notes automatically based on the folder they are created in or moved to.",
   "author": "24tiy",

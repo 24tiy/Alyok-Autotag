@@ -51,8 +51,6 @@ Excalidraw drawings and Kanban boards are always left alone. A note only counts 
 - Show folders without rules
 - Rule for the current folder
 
-The interface is in English and Russian and follows the Obsidian language.
-
 ## Installation
 
 In Obsidian: Settings, Community plugins, Browse, search for Alyok Autotag. Until it shows up there, use one of the ways below.
@@ -75,12 +73,16 @@ npm run lint
 
 ## Changelog
 
+### 1.1.1
+
+- The interface is English only, the Russian translation is gone.
+
 ### 1.1.0
 
 - Tags can go to the `tags` property instead of the block.
 - Skipped folders.
 - "Autotag rule" in the folder menu. Saving a rule there also retags the notes already in the folder.
-- Commands and Russian interface.
+- Commands.
 - Rules follow renamed and moved folders.
 - Settings reworked for phones: long folder names and tags are no longer cut off.
 - Fixed: text written below the tag block was deleted when the note was moved.

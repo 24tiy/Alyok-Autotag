@@ -1,12 +1,11 @@
 import { App, FuzzySuggestModal, Modal, Setting } from "obsidian";
-import { t } from "./i18n";
 import type AlyokAutotag from "./main";
 import { cleanFolder, folderTag, ruleTags } from "./tags";
 
 export class FolderSuggest extends FuzzySuggestModal<string> {
   constructor(app: App, private items: string[], private onPick: (folder: string) => void | Promise<void>) {
     super(app);
-    this.setPlaceholder(t("chooseFolder"));
+    this.setPlaceholder("Choose folder");
   }
 
   getItems() {
@@ -39,27 +38,27 @@ export class FolderRuleModal extends Modal {
       this.close();
     };
 
-    this.titleEl.setText(t("ruleTitle", { folder: this.folder }));
+    this.titleEl.setText(`Rule for ${this.folder}`);
     new Setting(this.contentEl)
-      .setName(t("ruleTags"))
-      .setDesc(t("ruleTagsDesc"))
+      .setName("Tags")
+      .setDesc("Leave empty to delete the rule.")
       .addText(text => {
-        text.setPlaceholder(t("tagsPlaceholder")).setValue(tags).onChange(v => (tags = v));
+        text.setPlaceholder("#tag1 #tag2").setValue(tags).onChange(v => (tags = v));
         text.inputEl.addEventListener("keydown", e => {
           if (e.key === "Enter" && !e.isComposing) void save();
         });
       });
     new Setting(this.contentEl)
-      .setName(t("ruleRetag"))
-      .setDesc(t("ruleRetagDesc"))
+      .setName("Retag notes already here")
+      .setDesc("Applies the rule to the notes that are in this folder now.")
       .addToggle(toggle => toggle.setValue(retag).onChange(v => (retag = v)));
     new Setting(this.contentEl)
-      .setName(t("ruleSkip"))
-      .setDesc(t("ruleSkipDesc"))
+      .setName("Skip this folder")
+      .setDesc("Notes here never get tags.")
       .addToggle(toggle => toggle.setValue(skip).onChange(v => (skip = v)));
     new Setting(this.contentEl)
-      .addButton(b => b.setButtonText(t("cancel")).onClick(() => this.close()))
-      .addButton(b => b.setButtonText(t("save")).setCta().onClick(save));
+      .addButton(b => b.setButtonText("Cancel").onClick(() => this.close()))
+      .addButton(b => b.setButtonText("Save").setCta().onClick(save));
   }
 
   onClose() {
@@ -73,7 +72,7 @@ export class UntaggedModal extends Modal {
   }
 
   onOpen() {
-    this.titleEl.setText(t("untaggedName"));
+    this.titleEl.setText("Folders without rules");
     this.render();
   }
 
@@ -82,7 +81,7 @@ export class UntaggedModal extends Modal {
     contentEl.empty();
     const folders = this.plugin.foldersWithoutRules();
     if (!folders.length) {
-      contentEl.createEl("p", { text: t("untaggedNone") });
+      contentEl.createEl("p", { text: "Every folder has a rule." });
       return;
     }
     for (const folder of folders) {
@@ -91,8 +90,8 @@ export class UntaggedModal extends Modal {
         .setName(folder)
         .setClass("alyok-inline")
         .setClass("alyok-clickable")
-        .addExtraButton(b => b.setIcon("plus").setTooltip(t("menuRule")));
-      if (inherited.length) row.setDesc(t("inherits", { tags: inherited.map(tag => "#" + tag).join(" ") }));
+        .addExtraButton(b => b.setIcon("plus").setTooltip("Autotag rule"));
+      if (inherited.length) row.setDesc(`Inherits ${inherited.map(tag => "#" + tag).join(" ")}`);
       row.settingEl.addEventListener("click", () => new FolderRuleModal(this.app, this.plugin, folder, () => this.render()).open());
     }
   }
@@ -115,21 +114,21 @@ export class AutoRulesModal extends Modal {
       this.close();
     };
 
-    this.titleEl.setText(t("autoName"));
-    new Setting(contentEl).setName(t("autoStyle")).addDropdown(d =>
+    this.titleEl.setText("Rules from folder names");
+    new Setting(contentEl).setName("Tag").addDropdown(d =>
       d
-        .addOption("leaf", t("autoStyleLeaf"))
-        .addOption("nested", t("autoStyleNested"))
+        .addOption("leaf", "Folder name: #Design")
+        .addOption("nested", "Full path: #Projects/Work/Design")
         .setValue("leaf")
         .onChange(v => (nested = v === "nested"))
     );
     new Setting(contentEl)
-      .setName(t("autoOnlyNew"))
-      .addButton(b => b.setButtonText(t("autoCreate")).setCta().onClick(() => run(false)));
+      .setName("Only folders without a rule")
+      .addButton(b => b.setButtonText("Create").setCta().onClick(() => run(false)));
     new Setting(contentEl)
-      .setName(t("autoAll"))
-      .setDesc(t("autoAllDesc"))
-      .addButton(b => b.setButtonText(t("autoCreate")).setWarning().onClick(() => run(true)));
+      .setName("All folders")
+      .setDesc("Replaces tags in existing rules.")
+      .addButton(b => b.setButtonText("Create").setWarning().onClick(() => run(true)));
   }
 
   onClose() {
@@ -143,13 +142,13 @@ export class ApplyModal extends Modal {
   }
 
   onOpen() {
-    this.titleEl.setText(t("applyTitle"));
-    this.contentEl.createEl("p", { text: t("applyText") });
+    this.titleEl.setText("Apply rules to all notes?");
+    this.contentEl.createEl("p", { text: "Tags will be rewritten in every note covered by a rule. Skipped folders stay as they are." });
     new Setting(this.contentEl)
-      .addButton(b => b.setButtonText(t("cancel")).onClick(() => this.close()))
+      .addButton(b => b.setButtonText("Cancel").onClick(() => this.close()))
       .addButton(b =>
         b
-          .setButtonText(t("apply"))
+          .setButtonText("Apply")
           .setWarning()
           .onClick(() => {
             this.close();
