@@ -1,42 +1,40 @@
-name: Obsidian Plugin Release
+name: Build
 
 on:
   push:
-    tags:
-      - '1.*.*'  # ловим теги вида 1.0.0
+    branches: [main]
+    tags: ["*"]
+  pull_request:
+
+permissions:
+  contents: write
 
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
-          node-version: '20'
+          node-version: 22
+          cache: npm
 
-      - name: Install dependencies
-        run: npm install
+      - run: npm ci
 
-      - name: Compile plugin
-        run: npm run build
+      - run: npm run lint
 
-      - name: Create release folder
-        run: |
-          mkdir release
-          cp main.js release/
-          cp manifest.json release/
-          cp README.md release/
+      - run: npm run build
 
-      - name: Upload compiled files to release
-        uses: softprops/action-gh-release@v1
+      - name: Check version
+        if: startsWith(github.ref, 'refs/tags/')
+        run: test "$GITHUB_REF_NAME" = "$(node -p "require('./manifest.json').version")"
+
+      - name: Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v3
         with:
           files: |
-            release/main.js
-            release/manifest.json
-            release/README.md
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+            main.js
+            manifest.json
+            styles.css

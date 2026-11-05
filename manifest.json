@@ -1,9 +1,9 @@
 {
   "id": "alyok-autotag",
   "name": "Alyok Autotag",
-  "version": "1.0.0",
-  "minAppVersion": "1.0.0",
-  "description": "Automatically adds tags to notes when they are created or moved into specific folders.",
+  "version": "1.1.0",
+  "minAppVersion": "1.8.7",
+  "description": "Tag notes automatically based on the folder they are created in or moved to.",
   "author": "24tiy",
   "authorUrl": "https://github.com/24tiy",
   "isDesktopOnly": false
