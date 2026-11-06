@@ -73,6 +73,11 @@ npm run lint
 
 ## Changelog
 
+### 1.2.1
+
+- Fixed: right after Obsidian started, settings could show "Folder not found" for folders that exist, and rules didn't update there after a folder was renamed.
+- New demo in this README.
+
 ### 1.2.0
 
 - Settings use the new Obsidian settings API, so they show up in the settings search.

@@ -1,4 +1,4 @@
-import { MarkdownView, Menu, Notice, Plugin, TAbstractFile, TFile, TFolder, Vault, getFrontMatterInfo, normalizePath, parseYaml } from "obsidian";
+import { MarkdownView, Menu, Notice, Plugin, TAbstractFile, TFile, TFolder, Vault, debounce, getFrontMatterInfo, normalizePath, parseYaml } from "obsidian";
 import { ApplyModal, FolderRuleModal, UntaggedModal } from "./modals";
 import { DEFAULT_SETTINGS, Settings, SettingTab } from "./settings";
 import {
@@ -74,6 +74,7 @@ export default class AlyokAutotag extends Plugin {
   private draining = false;
   private timers = new Set<number>();
   private folderMoves: { from: string; to: string }[] = [];
+  private refreshSettingsSoon = debounce(() => this.refreshSettings(), 300, true);
 
   async onload() {
     await this.loadSettings();
@@ -82,13 +83,20 @@ export default class AlyokAutotag extends Plugin {
     this.addCommands();
     this.registerEvent(this.app.workspace.on("file-menu", (menu, file) => this.addFolderMenu(menu, file)));
     this.app.workspace.onLayoutReady(() => {
+      this.refreshSettings();
       this.registerEvent(this.app.vault.on("create", file => this.onCreate(file)));
       this.registerEvent(this.app.vault.on("rename", (file, oldPath) => this.onRename(file, oldPath)));
+      this.registerEvent(
+        this.app.vault.on("delete", file => {
+          if (file instanceof TFolder) this.refreshSettingsSoon();
+        })
+      );
     });
   }
 
   onunload() {
     this.timers.forEach(id => window.clearTimeout(id));
+    this.refreshSettingsSoon.cancel();
   }
 
   get marker(): string {
@@ -178,6 +186,7 @@ export default class AlyokAutotag extends Plugin {
   }
 
   private onCreate(file: TAbstractFile) {
+    if (file instanceof TFolder) this.refreshSettingsSoon();
     if (!(file instanceof TFile) || file.extension !== "md") return;
     if (Date.now() - (file.stat.mtime || Date.now()) > FRESH_MS) return;
     const created = createdAt(file);
@@ -191,6 +200,7 @@ export default class AlyokAutotag extends Plugin {
   private onRename(file: TAbstractFile, oldPath: string) {
     if (file instanceof TFolder) {
       this.followFolder(oldPath, file.path);
+      this.refreshSettingsSoon();
       return;
     }
     if (!(file instanceof TFile) || file.extension !== "md" || parentOf(oldPath) === parentOf(file.path)) return;
